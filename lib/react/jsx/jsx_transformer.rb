@@ -27,7 +27,8 @@ module React
       # search for transformer file using sprockets - allows user to override
       # this file in his own application
       def jsx_transform_code
-        ::Rails.application.assets[@asset_path].to_s
+        assets = ::Rails.application.assets || ::Sprockets::Railtie.build_environment(::Rails.application)
+        assets[@asset_path].to_s
       end
     end
   end
