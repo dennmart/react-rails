@@ -1,56 +1,99 @@
-# react-rails
+# React-Rails
 
 [![Gem](https://img.shields.io/gem/v/react-rails.svg?style=flat-square)](http://rubygems.org/gems/react-rails)
+[![npm](https://img.shields.io/npm/v/react_ujs.svg?style=flat-square)](https://www.npmjs.com/package/react_ujs)
 [![Build Status](https://img.shields.io/travis/reactjs/react-rails/master.svg?style=flat-square)](https://travis-ci.org/reactjs/react-rails)
 [![Gemnasium](https://img.shields.io/gemnasium/reactjs/react-rails.svg?style=flat-square)](https://gemnasium.com/reactjs/react-rails)
 [![Code Climate](https://img.shields.io/codeclimate/github/reactjs/react-rails.svg?style=flat-square)](https://codeclimate.com/github/reactjs/react-rails)
-[![Test Coverage](https://img.shields.io/codeclimate/coverage/github/reactjs/react-rails.svg?style=flat-square)](https://codeclimate.com/github/reactjs/react-rails/coverage)
 
-`react-rails` makes it easy to use [React](http://facebook.github.io/react/) and [JSX](http://facebook.github.io/react/docs/jsx-in-depth.html) in your Ruby on Rails (3.2+) application. Learn more:
 
-- React's [Getting Started guide](https://facebook.github.io/react/docs/getting-started.html)
-- Use React & JSX [with webpacker](#use-with-webpacker) or [with the asset pipeline](#use-with-asset-pipeline)
-- Rendering [components in views](#view-helper) or [in controller actions](#controller-actions)
-- [Server-side rendering](#server-side-rendering)
-- [Generating components](#component-generator) in various formats
-- [`ReactRailsUJS`](#ujs) for mounting and unmounting components
-- Automatically [camelizing props](#camelize-props)
+React-Rails is a flexible tool to use [React](http://facebook.github.io/react/) with Rails. It:
+* Automatically renders React server-side and client-side
+* Supports Webpacker 3.x, 2.x, 1.1+
+* Supports Sprockets 4.x, 3.x, 2.x
+* Lets you use [JSX](http://facebook.github.io/react/docs/jsx-in-depth.html), [ES6](http://es6-features.org/), [Coffeescript](http://coffeescript.org/)
+
+Example app code available here: https://github.com/BookOfGreg/react-rails-example-app
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Contents
+
+- [Get started with Webpacker](#get-started-with-webpacker)
+  - [File naming](#file-naming)
+- [Use with Asset Pipeline](#use-with-asset-pipeline)
+  - [Custom JSX Transformer](#custom-jsx-transformer)
+  - [React.js versions](#reactjs-versions)
+- [View Helper](#view-helper)
+    - [Custom View Helper](#custom-view-helper)
+- [UJS](#ujs)
+  - [Mounting & Unmounting](#mounting--unmounting)
+  - [Event Handling](#event-handling)
+  - [`getConstructor`](#getconstructor)
+- [Server-Side Rendering](#server-side-rendering)
+    - [Configuration](#configuration)
+    - [JavaScript State](#javascript-state)
+    - [Custom Server Renderer](#custom-server-renderer)
+- [Controller Actions](#controller-actions)
+- [Component Generator](#component-generator)
+    - [Use with JBuilder](#use-with-jbuilder)
+  - [Camelize Props](#camelize-props)
+- [Upgrading](#upgrading)
+  - [2.3 to 2.4](#23-to-24)
 - [Related Projects](#related-projects)
-- [Developing](#development) the gem
+- [Contributing](#contributing)
 
-## Installation
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Install from Rubygems as `react-rails`.
 
-```ruby
-gem "react-rails"
-```
+The React-Rails Wiki has lots of additional information about React-Rails including many "how-to" articles and answers to the most frequently asked questions. Please browse the Wiki after finishing this README:
 
-Get started with `rails g react:install`:
+https://github.com/reactjs/React-Rails/wiki
 
-```
-$ rails g react:install
-```
 
-## Use with Webpacker
+## Get started with Webpacker
 
-[webpacker](https://github.com/rails/webpacker) integrates modern JS tooling with Rails. `ReactRailsUJS` allows you to gradually migrate to webpacker.
+[or Get started with Sprockets](#use-with-asset-pipeline)
 
-Get started by adding `webpacker` to your gemfile and installing `webpacker` and `react-rails`:
+[Webpacker](https://github.com/rails/webpacker) integrates modern JS tooling with Rails.
+
+Add `webpacker` and `react-rails` to your gemfile and run the installers:
 
 ```
-$ rails webpacker:install
-$ rails webpacker:install:react
+$ bundle install
+$ rails webpacker:install       # OR (on rails version < 5.0) rake webpacker:install
+$ rails webpacker:install:react # OR (on rails version < 5.0) rake webpacker:install:react
 $ rails generate react:install
 ```
 
 This gives you:
 
-- `components/` directory for your React components
-- [`ReactRailsUJS`](#ujs) setup in `packs/application.js`
-- `packs/server_rendering.js` for [server-side rendering](#server-side-rendering)
+- `app/javascript/components/` directory for your React components
+- [`ReactRailsUJS`](#ujs) setup in `app/javascript/packs/application.js`
+- `app/javascript/packs/server_rendering.js` for [server-side rendering](#server-side-rendering)
 
-When you add a component to `components/`, you can [render it in a Rails view](#view-helper):
+Link the JavaScript pack in Rails view using `javascript_pack_tag` [helper](https://github.com/rails/webpacker#usage), for example:
+
+```
+<!-- application.html.erb -->
+<%= javascript_pack_tag 'application' %>
+```
+
+Generate your first component:
+
+```
+$ rails g react:component HelloWorld greeting:string
+```
+
+Your component is added to `app/javascript/components/` by default.
+
+You can also generate your component in a subdirectory:
+
+```
+$ rails g react:component my_subdirectory/HelloWorld greeting:string
+```
+
+[Render it in a Rails view](#view-helper):
 
 ```erb
 <%= react_component("HelloWorld", { greeting: "Hello" }) %>
@@ -67,8 +110,6 @@ The component name tells `react-rails` where to load the component. For example:
 
 This way, you can access top-level, default, or named exports.
 
-If `require` fails, `react-rails` falls back to the global namespace approach described in [Use with Asset Pipeline](#use-with-asset-pipeline).
-
 The `require.context` inserted into `packs/application.js` is used to load components. If you want to load components from a different directory, override it by calling `ReactRailsUJS.useContext`:
 
 ```js
@@ -78,9 +119,33 @@ var ReactRailsUJS = require("react_ujs")
 ReactRailsUJS.useContext(myCustomContext)
 ```
 
+If `require` fails to find your component, [`ReactRailsUJS`](#ujs) falls back to the global namespace, described in [Use with Asset Pipeline](#use-with-asset-pipeline).
+
+### File naming
+
+React-Rails supports plenty of file extensions such as: .js, .jsx.js, .js.jsx, .es6.js, .coffee, etcetera!
+Sometimes this will cause a stumble when searching for filenames.
+
+Component File Name | `react_component` call
+-----|-----
+`app/javascript/components/samplecomponent.js` | `react_component("samplecomponent")`
+`app/javascript/components/sample_component.js` | `react_component("sample_component")`
+`app/javascript/components/SampleComponent.js` | `react_component("SampleComponent")`
+`app/javascript/components/SampleComponent.js.jsx` | Has to be renamed to SampleComponent.jsx, then use `react_component("SampleComponent")`
+
+### Typescript support
+
+If you want to use React-Rails with Typescript, simply run the installer and add @types:
+```
+$ bundle exec rails webpacker:install:typescript
+$ yarn add @types/react @types/react-dom
+```
+
+Doing this will allow React-Rails to support the .tsx extension.
+
 ## Use with Asset Pipeline
 
-`react-rails` provides React.js & a UJS driver to the Rails asset pipeline. Get started by installing:
+`react-rails` provides a pre-bundled React.js & a UJS driver to the Rails asset pipeline. Get started by installing:
 
 ```
 $ rails g react:install
@@ -90,16 +155,16 @@ Then restart your development server.
 
 This will:
 
-- add some `//= require`s to `application.js`  
+- add some `//= require`s to `application.js`
 - add a `components/` directory for React components
 - add `server_rendering.js` for [server-side rendering](#server-side-rendering)
 
 Now, you can create React components in `.jsx` files:
 
-```js
+```JSX
 // app/assets/javascripts/components/post.jsx
 
-window.Post = React.createClass({
+window.Post = createReactClass({
   render: function() {
     return <h1>{this.props.title}</h1>
   }
@@ -108,7 +173,7 @@ window.Post = React.createClass({
 // or, equivalent:
 class Post extends React.Component {
   render() {
-    return <h1>{this.props.title}</h1>    
+    return <h1>{this.props.title}</h1>
   }
 }
 ```
@@ -139,15 +204,6 @@ Components must be accessible from the top level, but they may be namespaced, fo
 
 `//= require react` brings `React` into your project.
 
-To include `React.addons`, add this config:
-
-```ruby
-# config/application.rb
-MyApp::Application.configure do
-  config.react.addons = true # defaults to false
-end
-```
-
 By default, React's [development version] is provided to `Rails.env.development`. You can override the React build with a config:
 
 ```ruby
@@ -163,7 +219,7 @@ MyApp::Application.configure do
 end
 ```
 
-Be sure to restart your Rails server after changing these files. See [VERSIONS.md](https://github.com/reactjs/react-rails/blob/master/VERSIONS.md) to learn which version of React.js is included with your `react-rails` version.
+Be sure to restart your Rails server after changing these files. See [VERSIONS.md](https://github.com/reactjs/react-rails/blob/master/VERSIONS.md) to learn which version of React.js is included with your `react-rails` version. In some edge cases you may need to bust the sprockets cache with `rake tmp:clear`
 
 
 ## View Helper
@@ -259,7 +315,7 @@ For example, if `Turbolinks` is loaded _after_ `ReactRailsUJS`, you'll need to c
 Components are loaded with `ReactRailsUJS.getConstructor(className)`. This function has two built-in implementations:
 
 - On the asset pipeline, it looks up `className` in the global namespace.
-- On webpacker, it `require`s files and accesses named exports, as described in [Use with Webpacker](#use-with-webpacker).
+- On Webpacker, it `require`s files and accesses named exports, as described in [Use with Webpacker](#use-with-webpacker).
 
 You can override this function to customize the mapping of name-to-constructor. [Server-side rendering](#server-side-rendering) also uses this function.
 
@@ -293,20 +349,22 @@ Server renderers are stored in a pool and reused between requests. Threaded Rubi
 These are the default configurations:
 
 ```ruby
-# config/environments/application.rb
+# config/application.rb
 # These are the defaults if you don't specify any yourself
-MyApp::Application.configure do
-  # Settings for the pool of renderers:
-  config.react.server_renderer_pool_size  ||= 1  # ExecJS doesn't allow more than one on MRI
-  config.react.server_renderer_timeout    ||= 20 # seconds
-  config.react.server_renderer = React::ServerRendering::BundleRenderer
-  config.react.server_renderer_options = {
-    files: ["server_rendering.js"],       # files to load for prerendering
-    replay_console: true,                 # if true, console.* will be replayed client-side
-  }
-  # Changing files matching these dirs/exts will cause the server renderer to reload:
-  config.react.server_renderer_extensions = ["jsx", "js"]
-  config.react.server_renderer_directories = ["/app/assets/javascripts", "/app/javascripts/"]
+module MyApp
+  class Application < Rails::Application
+    # Settings for the pool of renderers:
+    config.react.server_renderer_pool_size  ||= 1  # ExecJS doesn't allow more than one on MRI
+    config.react.server_renderer_timeout    ||= 20 # seconds
+    config.react.server_renderer = React::ServerRendering::BundleRenderer
+    config.react.server_renderer_options = {
+      files: ["server_rendering.js"],       # files to load for prerendering
+      replay_console: true,                 # if true, console.* will be replayed client-side
+    }
+    # Changing files matching these dirs/exts will cause the server renderer to reload:
+    config.react.server_renderer_extensions = ["jsx", "js"]
+    config.react.server_renderer_directories = ["/app/assets/javascripts", "/app/javascript/"]
+  end
 end
 ```
 
@@ -394,12 +452,12 @@ rails g react:component Post title:string published:bool published_by:instanceOf
 
 would generate:
 
-```js
-var Post = React.createClass({
+```JSX
+var Post = createReactClass({
   propTypes: {
-    title: React.PropTypes.string,
-    published: React.PropTypes.bool,
-    publishedBy: React.PropTypes.instanceOf(Person)
+    title: PropTypes.string,
+    published: PropTypes.bool,
+    publishedBy: PropTypes.instanceOf(Person)
   },
 
   render: function() {
@@ -411,7 +469,7 @@ var Post = React.createClass({
       </div>
     );
   }
-});
+};
 ```
 
 The generator also accepts options:
@@ -472,16 +530,43 @@ You can also specify this option in `react_component`:
 <%= react_component('HelloMessage', {name: 'John'}, {camelize_props: true}) %>
 ```
 
+## Upgrading
+
+### 2.3 to 2.4
+
+Keep your `react_ujs` up to date, `yarn upgrade`
+
+React-Rails 2.4.x uses React 16+ which no longer has React Addons. Therefore the pre-bundled version of react no longer has an addons version, if you need addons still, there is the 2.3.1+ version of the gem that still has addons.
+
+If you need to make changes in your components for the prebundled react, see the migration docs here:
+
+- https://reactjs.org/blog/2016/11/16/react-v15.4.0.html
+- https://reactjs.org/blog/2017/04/07/react-v15.5.0.html
+- https://reactjs.org/blog/2017/06/13/react-v15.6.0.html
+
+
+For the vast majority of cases this will get you most of the migration:
+- global find+replace `React.Prop` -> `Prop`
+- add `import PropTypes from 'prop-types'` (Webpacker only)
+- re-run `bundle exec rails webpacker:install:react` to update npm packages (Webpacker only)
+
 ## Related Projects
 
-- [react\_on\_rails Gem](https://github.com/shakacode/react_on_rails): Integration of React with Rails utilizing Webpack, Babel, React, Redux, React-Router.
-- [Ruby Hyperloop](http://ruby-hyperloop.io/): Use Ruby to build reactive user interfaces with React.
-- [react-rails-hot-loader](https://github.com/rmosolgo/react-rails-hot-loader) is a simple live-reloader for `react-rails`.
-- [react-rails-benchmark_renderer](https://github.com/pboling/react-rails-benchmark_renderer) adds performance instrumentation to server rendering.
+- [webpacker-react](https://github.com/renchap/webpacker-react): Integration of React with Rails utilizing Webpack with Hot Module Replacement (HMR).
 - [The Free React on Rails Course](https://learnetto.com/users/hrishio/courses/the-free-react-on-rails-5-course) A free video course which teaches the basics of React and how to get started using it in Rails with `react-rails`.
+- [react\_on\_rails](https://github.com/shakacode/react_on_rails): Integration of React with Rails utilizing Webpack, Redux, React-Router.
+- [react-rails-hot-loader](https://github.com/rmosolgo/react-rails-hot-loader) Simple live-reloader for `react-rails`.
+- [react-rails-benchmark_renderer](https://github.com/pboling/react-rails-benchmark_renderer) adds performance instrumentation to server rendering.
+- [Ruby Hyperloop](http://ruby-hyperloop.org/): Use Ruby to build reactive user interfaces with React.
 
-## Development
+## Contributing
 
-- Run tests with `rake test` or `appraisal rake test`
-- Update React assets with `rake react:update`
-- Update the UJS with `rake ujs:update`
+🎉 Thanks for taking the time to contribute! 🎉
+
+With 2 Million+ downloads of the react-rails Gem and another 100k+ downloads of react_ujs on NPM, you're helping the biggest React + Rails community!
+
+By contributing to React-Rails, you agree to abide by the [code of conduct](https://github.com/reactjs/react-rails/blob/master/CODE_OF_CONDUCT.md).
+
+You can always help by submitting patches or triaging issues, even offering reproduction steps to issues is incredibly helpful!
+
+Please see our [Contribution guide](https://github.com/reactjs/react-rails/blob/master/CONTRIBUTING.md) for more info.

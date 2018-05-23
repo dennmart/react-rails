@@ -119,7 +119,7 @@ var turbolinksClassicEvents = __webpack_require__(10)
 module.exports = function(ujs) {
   if (ujs.handleEvent) {
     // We're calling this a second time -- remove previous handlers
-    if (typeof Turbolinks.EVENTS !== "undefined") {
+    if (typeof Turbolinks !== "undefined" && typeof Turbolinks.EVENTS !== "undefined") {
       turbolinksClassicEvents.teardown(ujs);
     }
     turbolinksEvents.teardown(ujs);
@@ -128,14 +128,7 @@ module.exports = function(ujs) {
     nativeEvents.teardown(ujs);
   }
 
-  if (ujs.jQuery) {
-    ujs.handleEvent = function(eventName, callback) {
-      ujs.jQuery(document).on(eventName, callback);
-    };
-    ujs.removeEvent = function(eventName, callback) {
-      ujs.jQuery(document).off(eventName, callback);
-    }
-  } else if ('addEventListener' in window) {
+  if ('addEventListener' in window) {
     ujs.handleEvent = function(eventName, callback) {
       document.addEventListener(eventName, callback);
     };
@@ -240,6 +233,9 @@ var ReactRailsUJS = {
   // example: `data-react-props="{\"item\": { \"id\": 1, \"name\": \"My Item\"} }"`
   PROPS_ATTR: 'data-react-props',
 
+  // This attribute holds which method to use between: ReactDOM.hydrate, ReactDOM.render
+  RENDER_ATTR: 'data-hydrate',
+
   // If jQuery is detected, save a reference to it for event handlers
   jQuery: (typeof window !== 'undefined') && (typeof window.jQuery !== 'undefined') && window.jQuery,
 
@@ -307,6 +303,7 @@ var ReactRailsUJS = {
       var constructor = ujs.getConstructor(className);
       var propsJson = node.getAttribute(ujs.PROPS_ATTR);
       var props = propsJson && JSON.parse(propsJson);
+      var hydrate = node.getAttribute(ujs.RENDER_ATTR);
 
       if (!constructor) {
         var message = "Cannot find component: '" + className + "'"
@@ -315,7 +312,11 @@ var ReactRailsUJS = {
         }
         throw new Error(message + ". Make sure your component is available to render.")
       } else {
-        ReactDOM.render(React.createElement(constructor, props), node);
+        if (hydrate && typeof ReactDOM.hydrate === "function") {
+          ReactDOM.hydrate(React.createElement(constructor, props), node);
+        } else {
+          ReactDOM.render(React.createElement(constructor, props), node);
+        }
       }
     }
   },
@@ -379,10 +380,7 @@ module.exports = {
   // Attach handlers to browser events to mount
   // (There are no unmount handlers since the page is destroyed on navigation)
   setup: function(ujs) {
-    if (ujs.jQuery) {
-      // Use jQuery if it's present:
-      ujs.handleEvent("ready", ujs.handleMount);
-    } else if ('addEventListener' in window) {
+    if ('addEventListener' in window) {
       ujs.handleEvent('DOMContentLoaded', ujs.handleMount);
     } else {
       // add support to IE8 without jQuery
@@ -391,7 +389,6 @@ module.exports = {
   },
 
   teardown: function(ujs) {
-    ujs.removeEvent("ready", ujs.handleMount);
     ujs.removeEvent('DOMContentLoaded', ujs.handleMount);
     ujs.removeEvent('onload', ujs.handleMount);
   }
@@ -425,14 +422,12 @@ module.exports = {
 module.exports = {
   // Turbolinks 5+ got rid of named events (?!)
   setup: function(ujs) {
-    ujs.handleEvent('DOMContentLoaded', ujs.handleMount)
-    ujs.handleEvent('turbolinks:render', ujs.handleMount)
+    ujs.handleEvent('turbolinks:load', ujs.handleMount)
     ujs.handleEvent('turbolinks:before-render', ujs.handleUnmount)
   },
 
   teardown: function(ujs) {
-    ujs.removeEvent('DOMContentLoaded', ujs.handleMount)
-    ujs.removeEvent('turbolinks:render', ujs.handleMount)
+    ujs.removeEvent('turbolinks:load', ujs.handleMount)
     ujs.removeEvent('turbolinks:before-render', ujs.handleUnmount)
   },
 }

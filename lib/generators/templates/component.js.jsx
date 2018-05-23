@@ -1,4 +1,4 @@
-<%= file_header %>var <%= component_name %> = React.createClass({
+<%= file_header %>var <%= component_name %> = createReactClass({
 <% if attributes.size > 0 -%>
   propTypes: {
 <% attributes.each_with_index do |attribute, idx| -%>
@@ -8,17 +8,13 @@
 <% end -%>
 
   render: function() {
-<% if attributes.size > 0 -%>
     return (
-      <div>
+      <React.Fragment>
 <% attributes.each do |attribute| -%>
-        <div><%= attribute[:name].titleize %>: {this.props.<%= attribute[:name].camelize(:lower) %>}</div>
+        <%= attribute[:name].titleize %>: {this.props.<%= attribute[:name].camelize(:lower) %>}
 <% end -%>
-      </div>
+      </React.Fragment>
     );
-<% else -%>
-    return <div />;
-<% end -%>
   }
 });
 <%= file_footer %>

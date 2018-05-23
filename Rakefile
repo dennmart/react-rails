@@ -20,61 +20,53 @@ def yarn_run_in(dirname, cmd)
 end
 
 namespace :react do
-  desc "Run the JS build process to put files in the gem source"
+  desc 'Run the JS build process to put files in the gem source'
   task update: [:install, :build, :copy]
 
-  desc "Build the JS bundles with Webpack"
+  desc 'Install the JavaScript dependencies'
+  task :install do
+    yarn_run_in('react-builds', 'upgrade')
+  end
+
+  desc 'Build the JS bundles with Webpack'
   task :build do
-    yarn_run_in("react-builds", "build")
+    yarn_run_in('react-builds', 'build')
   end
 
   desc "Copy browser-ready JS files to the gem's asset paths"
   task :copy do
-    environments = ["development", "production"]
+    environments = ['development', 'production']
     environments.each do |environment|
-      # Without addons:
       copy_react_asset("#{environment}/react-browser.js", "#{environment}/react.js")
       copy_react_asset("#{environment}/react-server.js", "#{environment}/react-server.js")
-
-      # With addons:
-      copy_react_asset("#{environment}/react-browser-with-addons.js", "#{environment}-with-addons/react.js")
-      copy_react_asset("#{environment}/react-server-with-addons.js", "#{environment}-with-addons/react-server.js")
     end
-  end
-
-  desc "Install the JavaScript dependencies"
-  task :install do
-    yarn_run_in("react-builds", "upgrade")
   end
 end
 
 namespace :ujs do
-  desc "Run the JS build process to put files in the gem source"
+  desc 'Run the JS build process to put files in the gem source'
   task update: [:install, :build, :copy]
 
-  desc "Install the JavaScript dependencies"
+  desc 'Install the JavaScript dependencies'
   task :install do
-    yarn_run_in("react_ujs", "upgrade")
+    `yarn upgrade`
   end
 
-
-  desc "Build the JS bundles with Webpack"
+  desc 'Build the JS bundles with Webpack'
   task :build do
-    yarn_run_in("react_ujs", "build")
+    `yarn build`
   end
 
   desc "Copy browser-ready JS files to the gem's asset paths"
   task :copy do
-    full_webpack_path = File.expand_path("../react_ujs/dist/react_ujs.js", __FILE__)
-    full_destination_path = File.expand_path("../lib/assets/javascripts/react_ujs.js", __FILE__)
+    full_webpack_path = File.expand_path('../react_ujs/dist/react_ujs.js', __FILE__)
+    full_destination_path = File.expand_path('../lib/assets/javascripts/react_ujs.js', __FILE__)
     FileUtils.cp(full_webpack_path, full_destination_path)
   end
 
-  desc "Publish the package in ./react_ujs/ to npm as `react_ujs`"
+  desc 'Publish the package in ./react_ujs/ to npm as `react_ujs`'
   task publish: :update do
-    Dir.chdir("react_ujs") do
-      `npm publish`
-    end
+    `npm publish`
   end
 end
 
@@ -92,7 +84,16 @@ end
 task default: :test
 
 task :test_setup do
-  Dir.chdir("./test/dummy") do
+  Dir.chdir('./test/dummy_sprockets') do
+    `yarn install`
+  end
+  Dir.chdir('./test/dummy_webpacker1') do
+    `yarn install`
+  end
+  Dir.chdir('./test/dummy_webpacker2') do
+    `yarn install`
+  end
+  Dir.chdir('./test/dummy_webpacker3') do
     `yarn install`
   end
 end

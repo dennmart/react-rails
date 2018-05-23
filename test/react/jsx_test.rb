@@ -9,7 +9,7 @@ EXPECTED_JS_2 = <<eos
 (function() {
   var Component;
 
-  Component = React.createClass({displayName: "Component",
+  Component = createReactClass({
     render: function() {
       return React.createElement(ExampleComponent, {videos:this.props.videos} );
     }
@@ -59,7 +59,7 @@ SprocketsHelpers.when_available do
     end
 
     def test_babel_transformer_accepts_babel_transformation_options
-      React::JSX.transform_options = {blacklist: ['spec.functionName', 'validation.react', "strict"]}
+      React::JSX.transform_options = { blacklist: ['spec.functionName', 'validation.react', 'strict'] }
       SprocketsHelpers.manually_expire_asset('example.js')
       get '/assets/example.js'
       assert_response :success

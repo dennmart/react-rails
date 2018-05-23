@@ -24,7 +24,7 @@ module React
       # are used by react_ujs to actually instantiate the React component
       # on the client.
       def react_component(name, props = {}, options = {}, &block)
-        options = {:tag => options} if options.is_a?(Symbol)
+        options = { :tag => options } if options.is_a?(Symbol)
         if options.fetch(:camelize_props, camelize_props_switch)
           props = React.camelize_props(props)
         end
@@ -39,6 +39,7 @@ module React
           html_options[:data].tap do |data|
             data[:react_class] = name
             data[:react_props] = (props.is_a?(String) ? props : props.to_json)
+            data[:hydrate] = 't' if prerender_options
           end
         end
         html_tag = html_options[:tag] || :div

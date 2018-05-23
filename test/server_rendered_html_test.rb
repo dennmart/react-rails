@@ -20,11 +20,11 @@ SprocketsHelpers.when_available do
       if WebpackerHelpers.available?
         file_with_updates = File.expand_path('../helper_files/TodoListWithUpdates.js', __FILE__)
         file_without_updates = File.expand_path('../helper_files/TodoListWithoutUpdates.js', __FILE__)
-        app_file = File.expand_path('../dummy/app/javascript/components/TodoList.js', __FILE__)
+        app_file = File.expand_path("../#{DUMMY_LOCATION}/app/javascript/components/TodoList.js", __FILE__)
       else
         file_with_updates = File.expand_path('../helper_files/TodoListWithUpdates.js.jsx', __FILE__)
         file_without_updates = File.expand_path('../helper_files/TodoListWithoutUpdates.js.jsx', __FILE__)
-        app_file = File.expand_path('../dummy/app/assets/javascripts/components/TodoList.js.jsx', __FILE__)
+        app_file = File.expand_path("../#{DUMMY_LOCATION}/app/assets/javascripts/components/TodoList.js.jsx", __FILE__)
       end
 
       FileUtils.cp app_file, file_without_updates
@@ -60,16 +60,16 @@ SprocketsHelpers.when_available do
         }
 
         if WebpackerHelpers.available?
-          new_file_path = '../dummy/app/javascript/components/NewList.js'
-          new_file_contents = <<-JS
-          var React = require("react")
-          module.exports = function() { return <span>"New List"</span> }
-          JS
+          new_file_path = "../#{DUMMY_LOCATION}/app/javascript/components/NewList.js"
+          new_file_contents = <<-HEREDOC
+var React = require("react")
+module.exports = function() { return <span>"New List"</span> }
+HEREDOC
         else
-          new_file_path = '../dummy/app/assets/javascripts/components/ZZ_NewComponent.js.jsx'
-          new_file_contents = <<-JS
-          var NewList = function() { return <span>"New List"</span> }
-          JS
+          new_file_path = "../#{DUMMY_LOCATION}/app/assets/javascripts/components/ZZ_NewComponent.js.jsx"
+          new_file_contents = <<-HEREDOC
+var NewList = function() { return <span>"New List"</span> }
+HEREDOC
         end
 
         new_file_path = File.expand_path(new_file_path, __FILE__)
@@ -79,6 +79,7 @@ SprocketsHelpers.when_available do
           WebpackerHelpers.compile
         else
           wait_to_ensure_asset_pipeline_detects_changes
+          FileUtils.touch new_file_path
         end
 
         get '/server/1?component_name=NewList'
@@ -91,7 +92,7 @@ SprocketsHelpers.when_available do
 
     test 'react server rendering shows console output as html comment' do
       # Make sure console messages are replayed when requested
-      React::ServerRendering.renderer_options = {replay_console: true}
+      React::ServerRendering.renderer_options = { replay_console: true }
       React::ServerRendering.reset_pool
       get '/server/console_example'
       assert_match(/Console Logged/, response.body)
@@ -100,7 +101,7 @@ SprocketsHelpers.when_available do
       assert_match(/console.error.apply\(console, \["rendered!","foo"\]\)/, response.body)
 
       # Make sure they're not when we don't ask for them
-      React::ServerRendering.renderer_options = {replay_console: false}
+      React::ServerRendering.renderer_options = { replay_console: false }
       React::ServerRendering.reset_pool
 
       get '/server/console_example'
@@ -116,7 +117,9 @@ SprocketsHelpers.when_available do
       assert_match(/<span.*data-react-class=\"TodoList\"/, rendered_html)
       # make sure that the items are prerendered
       assert_match(/Render this inline/, rendered_html)
-      assert_match(/<\/ul><\/span>/, rendered_html, "it accepts a tag override")
+      assert_match(/<\/ul><\/span>/, rendered_html, 'it accepts a tag override')
+      # make sure that prerendered items are marked
+      assert_match(/data-hydrate=\"t\"/, rendered_html)
       # make sure that the layout is rendered with the component
       assert_match(/<title>Dummy<\/title>/, rendered_html)
       # make sure that custom html attributes are rendered
@@ -130,6 +133,18 @@ SprocketsHelpers.when_available do
       rendered_html = response.body
       # make sure the tag closes immediately:
       assert_match(/<span.*data-react-class=\"TodoList\"[^<]*><\/span>/, rendered_html)
+    end
+
+    test 'react inline component rendering with camelize_props (pre-rendered)' do
+      get '/server/inline_component_with_camelize_props_prerender_true'
+      rendered_html = response.body
+      assert_match(/data-react-props.*testCamelizeProps.*true/, rendered_html)
+    end
+
+    test 'react inline component rendering with camelize_props (not pre-rendered)' do
+      get '/server/inline_component_with_camelize_props_prerender_false'
+      rendered_html = response.body
+      assert_match(/data-react-props.*testCamelizeProps.*true/, rendered_html)
     end
   end
 end

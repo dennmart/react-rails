@@ -1,4 +1,4 @@
-class @<%= component_name %> extends React.Component
+<%= file_header %>class <%= component_name %> extends React.Component
 <% if attributes.size > 0 -%>
   @propTypes =
 <% attributes.each do |attribute| -%>
@@ -7,12 +7,9 @@ class @<%= component_name %> extends React.Component
 
 <% end -%>
   render: ->
-<% if attributes.size > 0 -%>
-    `<div>
+    `<React.Fragment>
 <% attributes.each do |attribute| -%>
-      <div><%= attribute[:name].titleize %>: {this.props.<%= attribute[:name].camelize(:lower) %>}</div>
+      <%= attribute[:name].titleize %>: {this.props.<%= attribute[:name].camelize(:lower) %>}
 <% end -%>
-    </div>`
-<% else -%>
-    `<div />`
-<% end -%>
+    </React.Fragment>`
+<%= file_footer %>

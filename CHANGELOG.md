@@ -8,6 +8,92 @@
 
 #### Bug Fixes
 
+## 2.4.4
+
+#### New Features
+
+- React 16.2 prebundled #856, #874
+- Use Fragments instead of Divs by default #856
+- Explicitly support Ruby 2.5 #857
+- Add support for controller rendering using `camelize_props` #869
+- Many readme, doc and guide updates including Typescript #873, #865, #862, #854, #852, #849
+
+#### Deprecation
+
+- Drop explicit support for Ruby 2.1 #866
+- Drop explicit support for Rails 3, 4.0, 4.1 #866
+- If the gem continues to work on Ruby and Rails below what is in Travis, it is accidental.
+
+#### Bug Fixes
+
+- Correct behaviour of Turbolinks 5 mounting #868, 848
+- Correct behaviour of JQuery3 removing "on" #867, 762
+
+## 2.4.3
+
+#### Bug Fixes
+
+- Call ReactDOM.render() when react_component :prerender option is falsy, instead of ReactDOM.hydrate() #844, #842
+
+## 2.4.2
+#### Bug Fixes
+
+- ReactDOM.hydrate() may not be defined for everyone, it will now use hydrate if it is defined or fallback to render #832
+
+## 2.4.1
+
+#### New Features
+
+- Webpacker gets ES6 components by default #822
+- ReactDOM.hydrate() #828
+- Documentation updates #830
+
+#### Deprecation
+
+#### Bug Fixes
+
+- Webpacker local manifest sometimes had double asset_hosts if the dev server was running #834 thanks @joeyparis
+
+## 2.4.0
+
+#### Breaking Changes
+
+- (Sprockets) Prebundled React upgraded to 16 #792
+- (Sprockets) Addons removed #792
+
+#### Bug Fixes
+
+- Coffeescript generator exports correctly #799, #800
+- Running detector manually no longer breaks if Turbolinks is not preset #802
+
+## 2.3.1
+
+#### Breaking Changes
+
+- React Deprecations for 15.4, 15.5, 15.6 in preparation for 16 handled in prebundled version #789, #798
+
+#### New Features
+
+- Generator now makes modern style `createReactClass`(JS) or `extends React.Component`(ES6, CoffeeScript) code
+
+#### Deprecation
+
+- Next version will drop the addons option as they are not supported with React 16
+- TheRubyRacer's newest version (0.12.3 at time of writing) only supports libV8 (3.16.14.15) which is too old for some new JS features, future versions of this gem will need more modern ExecJS runtimes such as mini_racer (currently on libV8 5.9.x)
+
+#### Bug Fixes
+
+## 2.3.0
+
+#### New Features
+
+- Webpacker and Webpack 3 support #777
+- Update to React 15.6.2 #789
+
+#### Deprecation
+
+#### Bug Fixes
+
 ## 2.2.1
 
 #### New Features
